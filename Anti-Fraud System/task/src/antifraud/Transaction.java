@@ -11,7 +11,6 @@ public class Transaction {
         MANUAL_PROCESSING,
         PROHIBITED
     }
-@JsonIgnore
     private long amount;
 
     public Transaction() {

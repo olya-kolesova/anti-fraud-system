@@ -23,19 +23,22 @@ public class TransactionController {
 //            return new ResponseEntity<Transaction>()
         } else if (transaction.getAmount() <= 200) {
             transaction.setResult(Transaction.Result.ALLOWED);
-            getResponseForAmount(transaction);
-        } else if()
+
+            return getResponseForAmount(transaction);
+        } else if (transaction.getAmount() <= 1500) {
+            transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+            return getResponseForAmount(transaction);
+        } else {
+            transaction.setResult(Transaction.Result.PROHIBITED);
+            return getResponseForAmount(transaction);
+        }
 
     }
 
     private ResponseEntity<Object> getResponseForAmount(Transaction transaction) {
         ObjectMapper objectMapper = new ObjectMapper();
-        String body = "";
-        try {
-            body = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transaction);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        Map<String, Object> body = new HashMap<>();
+        body.put("result", transaction.getResult());
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 }
