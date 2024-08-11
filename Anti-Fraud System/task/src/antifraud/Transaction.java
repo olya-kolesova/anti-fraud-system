@@ -1,7 +1,15 @@
 package antifraud;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+
+import java.io.Serializable;
+
+@JsonDeserialize(using = TransactionDeserializer.class)
 public class Transaction {
 
     private String result;
@@ -11,21 +19,23 @@ public class Transaction {
         MANUAL_PROCESSING,
         PROHIBITED
     }
-    private long amount;
+    @Min(1)
+    @NotNull
+    private Long amount;
 
     public Transaction() {
 
     }
 
-    public Transaction(long amount) {
+    public Transaction(Long amount) {
         this.amount = amount;
     }
 
-    public long getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
-    public void setAmount(long amount) {
+    public void setAmount(Long amount) {
         this.amount = amount;
     }
 
