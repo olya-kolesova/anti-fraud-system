@@ -22,7 +22,6 @@ public class TransactionController {
     public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody Transaction transaction) {
         if (transaction.getAmount() <= 200) {
             transaction.setResult(Transaction.Result.ALLOWED);
-
             return getResponseForAmount(transaction);
         } else if (transaction.getAmount() <= 1500) {
             transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
