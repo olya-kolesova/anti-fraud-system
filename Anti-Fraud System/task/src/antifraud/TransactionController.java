@@ -17,6 +17,11 @@ import java.util.Map;
 @RestController
 public class TransactionController {
 
+
+    @PostMapping("/api/auth/user") {
+        public @ResponseBody ResponseEntity<Object> authenticateUser(@Valid @RequestBody RegistrationRequest request)
+    }
+
     @PostMapping("/api/antifraud/transaction")
 
     public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody Transaction transaction) {
@@ -38,4 +43,7 @@ public class TransactionController {
         body.put("result", transaction.getResult());
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
+
+
+
 }
