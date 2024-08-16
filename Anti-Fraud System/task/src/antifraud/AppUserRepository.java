@@ -1,8 +1,13 @@
 package antifraud;
 
 import org.springframework.data.repository.CrudRepository;
-import java.util.Optional;
+import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+@Repository
 public interface AppUserRepository extends CrudRepository<AppUser, Long> {
-    public Optional<AppUser> findAppUserByUsername(String username);
+    Optional<AppUser> findAppUserByUsername(String username);
+
+    List<AppUser> findByOrderById();
 }

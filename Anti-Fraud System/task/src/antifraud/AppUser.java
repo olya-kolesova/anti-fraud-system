@@ -1,15 +1,16 @@
 package antifraud;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+
 ;
 @Entity
 public class AppUser {
-    private String name;
     @Id
     @GeneratedValue
     private Long id;
+    private String name;
     private String username;
     private String password;
     private String authority;

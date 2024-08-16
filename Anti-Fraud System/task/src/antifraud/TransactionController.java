@@ -2,15 +2,15 @@ package antifraud;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -18,34 +18,40 @@ import java.util.NoSuchElementException;
 @RestController
 public class TransactionController {
 
-    private AppUserRepository repository;
-    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private final AppUserService service;
+    @Autowired
+    private final PasswordEncoder passwordEncoder;
 
-    public TransactionController(AppUserRepository repository, PasswordEncoder passwordEncoder) {
-        this.repository = repository;
+    public TransactionController(AppUserService service, PasswordEncoder passwordEncoder) {
+        this.service = service;
         this.passwordEncoder = passwordEncoder;
     }
 
 
     @PostMapping("/api/auth/user")
     public @ResponseBody ResponseEntity<Object> authenticate(@Valid @RequestBody RegistrationRequest request) {
-        if (repository.findAppUserByUsername(request.username()).isPresent()) {
+        if (service.isUserPresent(request.username())) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         AppUser appUser = new AppUser();
         appUser.setName(request.name());
         appUser.setUsername(request.username());
-        appUser.setPassword(request.password());
+        appUser.setPassword(passwordEncoder.encode(request.password()));
         appUser.setAuthority("ROLE_USER");
-        repository.save(appUser);
-        AppUser repositoryUser = repository.findAppUserByUsername(request.username())
-                .orElseThrow(() -> new NoSuchElementException("Not found"));
-        Map<String, Object> user = new HashMap<>();
-        user.put("id", repositoryUser.getId());
-        user.put("name", repositoryUser.getName());
-        user.put("username", repositoryUser.getUsername());
+        service.saveUser(appUser);
+        AppUserDTO user = service.findAppUserDTOByUsername(request.username());
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
+
+
+    @GetMapping("/api/auth/list")
+    public ResponseEntity<List<AppUserDTO>> getUserList() {
+        return new ResponseEntity<>(service.findAppUserDTOByOrder(), HttpStatus.OK) ;
+    }
+
+
+
 
 
     @PostMapping("/api/antifraud/transaction")
