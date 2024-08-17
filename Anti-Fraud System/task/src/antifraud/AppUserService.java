@@ -1,5 +1,6 @@
 package antifraud;
 
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,11 @@ public class AppUserService {
        return repository.findByOrderById().stream()
                .map(this::convertAppUserToDTO)
                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteAppUserByUsername(String username) {
+        repository.deleteByUsername(username);
     }
 
     private AppUserDTO convertAppUserToDTO(AppUser appUser) {

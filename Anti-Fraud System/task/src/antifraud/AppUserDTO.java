@@ -12,6 +12,8 @@ public class AppUserDTO {
         this.username = username;
     }
 
+    public AppUserDTO() {};
+
     public Long getId() {
         return id;
     }
@@ -32,7 +34,7 @@ public class AppUserDTO {
         return username;
     }
 
-    public void setUsername() {
+    public void setUsername(String username) {
         this.username = username;
     }
 

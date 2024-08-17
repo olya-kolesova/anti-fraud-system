@@ -1,5 +1,7 @@
 package antifraud;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,7 @@ public class TransactionController {
 
 
     @PostMapping("/api/auth/user")
-    public @ResponseBody ResponseEntity<Object> authenticate(@Valid @RequestBody RegistrationRequest request) {
+    public @ResponseBody ResponseEntity<Object> authenticate(@Valid @RequestBody RegistrationRequest request) throws JsonProcessingException {
         if (service.isUserPresent(request.username())) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
@@ -41,6 +43,10 @@ public class TransactionController {
         appUser.setAuthority("ROLE_USER");
         service.saveUser(appUser);
         AppUserDTO user = service.findAppUserDTOByUsername(request.username());
+//        System.out.println("User found!");
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        String userJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user);
+//        System.out.println(userJson);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
@@ -50,7 +56,17 @@ public class TransactionController {
         return new ResponseEntity<>(service.findAppUserDTOByOrder(), HttpStatus.OK) ;
     }
 
+    @DeleteMapping("/api/auth/user/{username}")
+    public ResponseEntity<Object> deleteUser(@PathVariable String username) {
+        if (!(service.isUserPresent(username))) {
+            return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
+        }
 
+        service.deleteAppUserByUsername(username);
+        DeleteResponse deleteResponse = new DeleteResponse(username, "Deleted successfully!");
+        return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
+
+    }
 
 
 
@@ -78,6 +94,6 @@ public class TransactionController {
     @Validated
     public record RegistrationRequest(@NotEmpty String name, @NotEmpty String username, @NotEmpty String password) {}
 
-
+    public record DeleteResponse(String username, String status) {}
 
 }
