@@ -2,6 +2,8 @@ package antifraud;
 
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -9,10 +11,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class AppUserService {
+public class AppUserService implements UserDetailsService {
 
     private final AppUserRepository repository;
-
     private final ModelMapper modelMapper;
 
     public AppUserService(AppUserRepository repository, ModelMapper modelMapper) {
@@ -52,6 +53,12 @@ public class AppUserService {
         return modelMapper.map(appUser, AppUserDTO.class);
     }
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        AppUser appUser = repository
+                .findAppUserByUsername(username.toLowerCase())
+                .orElseThrow(() -> new UsernameNotFoundException("Not found!"));
 
-
+        return new AppUserAdapter(appUser);
+    }
 }

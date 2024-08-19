@@ -10,11 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+
 
 
 @RestController
@@ -30,10 +29,9 @@ public class TransactionController {
         this.passwordEncoder = passwordEncoder;
     }
 
-
     @PostMapping("/api/auth/user")
     public @ResponseBody ResponseEntity<Object> authenticate(@Valid @RequestBody RegistrationRequest request) throws JsonProcessingException {
-        if (service.isUserPresent(request.username())) {
+        if (service.isUserPresent(request.username().toLowerCase())) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         AppUser appUser = new AppUser();
@@ -43,10 +41,6 @@ public class TransactionController {
         appUser.setAuthority("ROLE_USER");
         service.saveUser(appUser);
         AppUserDTO user = service.findAppUserDTOByUsername(request.username());
-//        System.out.println("User found!");
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        String userJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user);
-//        System.out.println(userJson);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
@@ -67,7 +61,6 @@ public class TransactionController {
         return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
 
     }
-
 
 
     @PostMapping("/api/antifraud/transaction")
