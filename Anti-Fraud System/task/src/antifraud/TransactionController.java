@@ -96,6 +96,30 @@ public class TransactionController {
         }
     }
 
+    @PutMapping("/api/auth/access")
+    public ResponseEntity<Object> changeAccess(@RequestBody AccessRequest accessRequest) {
+        if (accessRequest.operation().equals("UNLOCK") || accessRequest.operation().equals("LOCK")) {
+            try {
+                AppUser user = service.findAppUserByUsername(accessRequest.username());
+                if (user.getAuthority().equals("ADMINISTRATOR")) {
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                } else {
+                    user.setNonLocked(accessRequest.operation.equals(("UNLOCK")));
+                }
+                service.saveUser(user);
+                Map<String, String> status = new HashMap();
+                String statusWord = user.isNonLocked() ? "unlocked" : "locked";
+                String statusExp = String.format("%s %s!", user.getUsername(), statusWord);
+                status.put("status", statusExp);
+                return new ResponseEntity<>(status, HttpStatus.OK);
+            } catch (UsernameNotFoundException exception) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
     @PostMapping("/api/antifraud/transaction")
     public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody Transaction transaction) {
@@ -125,5 +149,8 @@ public class TransactionController {
 
     @Validated
     public record RoleAssignmentRequest(@NotEmpty String username, @NotEmpty String role) {}
+
+    @Validated
+    public record AccessRequest(@NotEmpty String username, @NotEmpty String operation) {}
 
 }
