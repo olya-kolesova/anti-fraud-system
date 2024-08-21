@@ -14,7 +14,6 @@ public class AppUserAdapter implements UserDetails {
         this.appUser = appUser;
     }
 
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(appUser.getAuthority()));
@@ -37,7 +36,7 @@ public class AppUserAdapter implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return appUser.isNonLocked();
     }
 
     @Override

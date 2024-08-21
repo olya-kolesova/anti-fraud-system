@@ -21,12 +21,10 @@ public class AppUserService implements UserDetailsService {
         this.modelMapper = modelMapper;
     }
 
-    public AppUserDTO findAppUserDTOByUsername(String username) {
-        AppUser appuser = repository.findAppUserByUsername(username).orElseThrow(
+    public AppUser findAppUserByUsername(String username) {
+        return repository.findAppUserByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException("Not found!")
         );
-        return convertAppUserToDTO(appuser);
-
     }
 
     public boolean isUserPresent(String username) {
@@ -49,8 +47,10 @@ public class AppUserService implements UserDetailsService {
         repository.deleteByUsername(username);
     }
 
-    private AppUserDTO convertAppUserToDTO(AppUser appUser) {
-        return modelMapper.map(appUser, AppUserDTO.class);
+    public AppUserDTO convertAppUserToDTO(AppUser appUser) {
+        AppUserDTO userDTO = modelMapper.map(appUser, AppUserDTO.class);
+        userDTO.setRole(appUser.getAuthority());
+        return userDTO;
     }
 
     @Override

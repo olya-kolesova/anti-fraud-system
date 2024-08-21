@@ -1,19 +1,21 @@
 package antifraud;
 
+import com.zaxxer.hikari.HikariDataSource;
+import jakarta.servlet.DispatcherType;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
@@ -27,18 +29,50 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 public class SecurityConfig {
 
-//    @Bean
-//    public DataSource dataSource() {
-//        return new EmbeddedDatabaseBuilder()
-//                .setType(EmbeddedDatabaseType.H2)
-//                .addScript(JdbcDaoImpl.DEFAULT_USER_SCHEMA_DDL_LOCATION)
-//                .build();
-//    }
+//    @Autowired
+//    private DataSource dataSource;
+
+
 //
-//    @Bean
-//    public UserDetailsManager users(DataSource dataSource) {
-//        return new JdbcUserDetailsManager(dataSource);
+//    @Autowired
+//    public void configureGlobal(AuthenticationManagerBuilder auth)
+//            throws Exception {
+//        auth.jdbcAuthentication()
+//                .dataSource(dataSource)
+//                .withDefaultSchema()
+//                .withUser(User.withUsername("user")
+//                        .password(passwordEncoder().encode("pass"))
+//                        .roles("USER"));
 //    }
+
+
+
+//    @Bean
+//    public UserDetailsManager users(dataSource) {
+//        UserDetails user = User.builder()
+//                .username("user")
+//                .password("{bcrypt}password")
+//                .roles("USER")
+//                .build();
+//        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
+//        users.createUser(user);
+//        return users;
+//    }
+
+    @Bean
+    public static BeanPostProcessor clearDataSourceUserName() {
+        return new BeanPostProcessor() {
+
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                if (bean instanceof HikariDataSource) {
+                    ((HikariDataSource) bean).setUsername("");
+                }
+                return bean;
+            }
+
+        };
+    }
 
 
     @Bean
@@ -52,14 +86,15 @@ public class SecurityConfig {
         http
                 .httpBasic(withDefaults())
                 .csrf(CsrfConfigurer::disable)
-                .headers((headers) -> headers.disable())
+                .headers(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize) -> authorize
-                        .anyRequest().permitAll())
-//                        .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
-//                        .requestMatchers("/actuator/shutdown").permitAll()
-//                        .requestMatchers("/api/auth/list").authenticated()
-//                        .requestMatchers(HttpMethod.DELETE, "/api/auth/user/{username}").hasAuthority("ROLE_USER")
-//                        .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("ROLE_USER"))
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
+                        .requestMatchers("/actuator/shutdown").permitAll()
+                        .requestMatchers("/api/auth/list").hasAnyAuthority("ADMINISTRATOR", "SUPPORT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/auth/user/{username}").hasAuthority("ADMINISTRATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT")
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/role").hasAuthority("ADMINISTRATOR"))
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

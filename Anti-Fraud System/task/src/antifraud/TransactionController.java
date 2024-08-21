@@ -1,12 +1,12 @@
 package antifraud;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,10 +38,19 @@ public class TransactionController {
         appUser.setName(request.name());
         appUser.setUsername(request.username());
         appUser.setPassword(passwordEncoder.encode(request.password()));
-        appUser.setAuthority("ROLE_USER");
+        if (service.findAppUserDTOByOrder().isEmpty()) {
+            appUser.setAuthority(Role.ADMINISTRATOR);
+            appUser.setNonLocked(true);
+        } else {
+            appUser.setAuthority(Role.MERCHANT);
+            appUser.setNonLocked(false);
+        }
+
         service.saveUser(appUser);
-        AppUserDTO user = service.findAppUserDTOByUsername(request.username());
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
+
+        AppUser user = service.findAppUserByUsername(request.username());
+        AppUserDTO userDTO = service.convertAppUserToDTO(user);
+        return new ResponseEntity<>(userDTO, HttpStatus.CREATED);
     }
 
 
@@ -60,6 +69,31 @@ public class TransactionController {
         DeleteResponse deleteResponse = new DeleteResponse(username, "Deleted successfully!");
         return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
 
+    }
+
+    @PutMapping("/api/auth/role")
+    public ResponseEntity<Object> assignRole(@RequestBody RoleAssignmentRequest request) {
+        if (!(request.role.equals("SUPPORT") || request.role.equals("MERCHANT"))) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        if (!(service.isUserPresent(request.username()))) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            try {
+                AppUser user = service.findAppUserByUsername(request.username());
+                if (user.getAuthority().equals(request.role())) {
+                    return new ResponseEntity<>(HttpStatus.CONFLICT);
+                } else {
+                    user.setAuthority(Role.valueOf(request.role()));
+                    service.saveUser(user);
+                    AppUserDTO userDTO = service.convertAppUserToDTO(user);
+                    return new ResponseEntity<>(userDTO, HttpStatus.OK);
+                }
+            } catch (UsernameNotFoundException exception) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+        }
     }
 
 
@@ -88,5 +122,8 @@ public class TransactionController {
     public record RegistrationRequest(@NotEmpty String name, @NotEmpty String username, @NotEmpty String password) {}
 
     public record DeleteResponse(String username, String status) {}
+
+    @Validated
+    public record RoleAssignmentRequest(@NotEmpty String username, @NotEmpty String role) {}
 
 }

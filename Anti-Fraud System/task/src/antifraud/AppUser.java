@@ -4,7 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
-;import java.util.Objects;
+
 
 @Entity
 public class AppUser {
@@ -14,7 +14,11 @@ public class AppUser {
     private String name;
     private String username;
     private String password;
+    private Role role;
     private String authority;
+    private boolean nonLocked;
+
+    public AppUser() {};
 
 
     public Long getId() {
@@ -49,13 +53,37 @@ public class AppUser {
         this.password = password;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public String getAuthority() {
         return authority;
     }
 
-    public void setAuthority(String role) {
-        this.authority = role;
+    public void setAuthority(Role role) {
+        this.authority = switch(role) {
+            case MERCHANT -> "MERCHANT";
+            case SUPPORT -> "SUPPORT";
+            case ADMINISTRATOR -> "ADMINISTRATOR";
+        };
+
     }
+
+    public boolean isNonLocked() {
+        return nonLocked;
+    }
+
+    public void setNonLocked(boolean lock) {
+        this.nonLocked = lock;
+    }
+
+
+
 
 
 }
