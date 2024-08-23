@@ -1,4 +1,4 @@
-package antifraud;
+package antifraud.utils;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import org.springframework.http.HttpHeaders;

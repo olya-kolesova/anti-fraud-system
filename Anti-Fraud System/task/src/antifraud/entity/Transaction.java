@@ -1,27 +1,32 @@
-package antifraud;
+package antifraud.entity;
 
-
-
+import antifraud.utils.TransactionDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-
-import java.io.Serializable;
-
 @JsonDeserialize(using = TransactionDeserializer.class)
 public class Transaction {
 
+
+    @Min(1)
+    @NotNull
+    private Long amount;
+
+
+    private String ip;
+    private String number;
+
     private String result;
+
+    private String info;
 
     public enum Result {
         ALLOWED,
         MANUAL_PROCESSING,
         PROHIBITED
     }
-    @Min(1)
-    @NotNull
-    private Long amount;
+
 
     public Transaction() {
 
@@ -39,6 +44,22 @@ public class Transaction {
         this.amount = amount;
     }
 
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public String getNumber() {
+        return number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
     public void setResult(Result result) {
         this.result = switch (result) {
             case ALLOWED -> "ALLOWED";
@@ -49,6 +70,14 @@ public class Transaction {
 
     public String getResult() {
         return result;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
     }
 
 

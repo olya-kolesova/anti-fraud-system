@@ -1,5 +1,9 @@
-package antifraud;
+package antifraud.service;
 
+import antifraud.utils.AppUserAdapter;
+import antifraud.dto.AppUserDTO;
+import antifraud.entity.AppUser;
+import antifraud.repository.AppUserRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,5 +1,9 @@
-package antifraud;
+package antifraud.controller;
 
+import antifraud.Role;
+import antifraud.dto.AppUserDTO;
+import antifraud.entity.AppUser;
+import antifraud.service.AppUserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -14,20 +18,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
 @RestController
-public class TransactionController {
+public class UserController {
 
     @Autowired
     private final AppUserService service;
     @Autowired
     private final PasswordEncoder passwordEncoder;
 
-    public TransactionController(AppUserService service, PasswordEncoder passwordEncoder) {
+    public UserController(AppUserService service, PasswordEncoder passwordEncoder) {
         this.service = service;
         this.passwordEncoder = passwordEncoder;
     }
+
+    @Validated
+    public record RegistrationRequest(@NotEmpty String name, @NotEmpty String username, @NotEmpty String password) {}
+    @Validated
+    public record RoleAssignmentRequest(@NotEmpty String username, @NotEmpty String role) {}
+    @Validated
+    public record AccessRequest(@NotEmpty String username, @NotEmpty String operation) {}
+    public record DeleteResponse(String username, String status) {}
+
+
 
     @PostMapping("/api/auth/user")
     public @ResponseBody ResponseEntity<Object> authenticate(@Valid @RequestBody RegistrationRequest request) throws JsonProcessingException {
@@ -109,7 +121,7 @@ public class TransactionController {
                 service.saveUser(user);
                 Map<String, String> status = new HashMap();
                 String statusWord = user.isNonLocked() ? "unlocked" : "locked";
-                String statusExp = String.format("%s %s!", user.getUsername(), statusWord);
+                String statusExp = String.format("User %s %s!", user.getUsername(), statusWord);
                 status.put("status", statusExp);
                 return new ResponseEntity<>(status, HttpStatus.OK);
             } catch (UsernameNotFoundException exception) {
@@ -120,37 +132,8 @@ public class TransactionController {
         }
     }
 
-
-    @PostMapping("/api/antifraud/transaction")
-    public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody Transaction transaction) {
-        if (transaction.getAmount() <= 200) {
-            transaction.setResult(Transaction.Result.ALLOWED);
-            return getResponseForAmount(transaction);
-        } else if (transaction.getAmount() <= 1500) {
-            transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
-            return getResponseForAmount(transaction);
-        } else {
-            transaction.setResult(Transaction.Result.PROHIBITED);
-            return getResponseForAmount(transaction);
-        }
-
-    }
-
-    private ResponseEntity<Object> getResponseForAmount(Transaction transaction) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("result", transaction.getResult());
-        return new ResponseEntity<>(body, HttpStatus.OK);
-    }
-
-    @Validated
-    public record RegistrationRequest(@NotEmpty String name, @NotEmpty String username, @NotEmpty String password) {}
-
-    public record DeleteResponse(String username, String status) {}
-
-    @Validated
-    public record RoleAssignmentRequest(@NotEmpty String username, @NotEmpty String role) {}
-
-    @Validated
-    public record AccessRequest(@NotEmpty String username, @NotEmpty String operation) {}
-
 }
+
+
+
+

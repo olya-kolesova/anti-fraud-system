@@ -1,4 +1,4 @@
-package antifraud;
+package antifraud.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
