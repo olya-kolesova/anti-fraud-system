@@ -77,19 +77,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain SecurityfilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/auth/**")
                 .httpBasic(withDefaults())
                 .csrf(CsrfConfigurer::disable)
                 .headers(AbstractHttpConfigurer::disable)
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests((authorize) -> authorize
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                         .requestMatchers("/actuator/shutdown").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                         .requestMatchers("/api/auth/list").hasAnyAuthority("ADMINISTRATOR", "SUPPORT")
                         .requestMatchers(HttpMethod.DELETE, "/api/auth/user/{username}").hasAuthority("ADMINISTRATOR")
                         .requestMatchers(HttpMethod.PUT, "/api/auth/role").hasAuthority("ADMINISTRATOR")
                         .requestMatchers(HttpMethod.PUT, "/api/auth/access").hasAuthority("ADMINISTRATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAuthority("SUPPORT")
                         .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));

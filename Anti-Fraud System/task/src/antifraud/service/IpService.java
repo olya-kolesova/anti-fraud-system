@@ -1,6 +1,8 @@
 package antifraud.service;
 
+import antifraud.entity.Ip;
 import antifraud.repository.IpRepository;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -20,5 +22,13 @@ public class IpService {
             return false;
         }
         return Arrays.stream(groups).map(Integer::parseInt).allMatch(x -> x <= 255 && x > 0);
+    }
+
+    public void saveIp(Ip ip) {
+        repository.save(ip);
+    }
+
+    public Ip findIpByIp(String ip) throws ChangeSetPersister.NotFoundException {
+        return repository.findByIp(ip).orElseThrow(ChangeSetPersister.NotFoundException::new);
     }
 }
