@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @JsonDeserialize(using = TransactionDeserializer.class)
 public class Transaction {
 
@@ -26,6 +29,8 @@ public class Transaction {
         MANUAL_PROCESSING,
         PROHIBITED
     }
+
+    private List<String> causes = new ArrayList<>();
 
 
     public Transaction() {
@@ -80,5 +85,12 @@ public class Transaction {
         this.info = info;
     }
 
+    public void addCause(String cause) {
+        causes.add(cause);
+    }
+
+    public List<String> getCauses() {
+        return causes;
+    }
 
 }
