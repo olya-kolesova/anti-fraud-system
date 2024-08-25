@@ -2,10 +2,12 @@ package antifraud.service;
 
 import antifraud.entity.Ip;
 import antifraud.repository.IpRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.List;
 
 
 @Service
@@ -31,4 +33,22 @@ public class IpService {
     public Ip findIpByIp(String ip) throws ChangeSetPersister.NotFoundException {
         return repository.findByIp(ip).orElseThrow(ChangeSetPersister.NotFoundException::new);
     }
+
+    public boolean isIpPresent(String ip) {
+        return repository.findByIp(ip).isPresent();
+    }
+    @Transactional
+    public void deleteByIp(String ip) throws ChangeSetPersister.NotFoundException {
+        if (isIpPresent(ip)) {
+            repository.deleteByIp(ip);
+        } else {
+            throw new ChangeSetPersister.NotFoundException();
+        }
+
+    }
+
+    public List<Ip> getAllIpSorted() {
+        return repository.findAllByOrderById();
+    }
+
 }

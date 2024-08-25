@@ -90,6 +90,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/auth/role").hasAuthority("ADMINISTRATOR")
                         .requestMatchers(HttpMethod.PUT, "/api/auth/access").hasAuthority("ADMINISTRATOR")
                         .requestMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAuthority("SUPPORT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip/{ip}").hasAuthority("SUPPORT")
+                        .requestMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip").hasAuthority("SUPPORT")
+                        .requestMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAuthority("SUPPORT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/{number}").hasAuthority("SUPPORT")
+                        .requestMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasAuthority("SUPPORT")
                         .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -101,26 +106,26 @@ public class SecurityConfig {
 
     }
 
-    @Bean
-    public SecurityFilterChain transactionSecurityFilterchain(HttpSecurity http) throws Exception {
-        http
-                .csrf(CsrfConfigurer::disable)
-                .headers(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests((authorize) -> authorize
-                    .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
-                .httpBasic().authenticationEntryPoint(authenticationEntryPoint());
-
-        return http.build();
-
-    }
-
-    @Bean
-    public AuthenticationEntryPoint authenticationEntryPoint() {
-        BasicAuthenticationEntryPoint entryPoint = new BasicAuthenticationEntryPoint();
-        entryPoint.setRealmName("certificate realm");
-        return entryPoint;
-    }
+//    @Bean
+//    public SecurityFilterChain transactionSecurityFilterchain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(CsrfConfigurer::disable)
+//                .headers(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests((authorize) -> authorize
+//                    .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+//                    .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
+//                .httpBasic().authenticationEntryPoint(authenticationEntryPoint());
+//
+//        return http.build();
+//
+//    }
+//
+//    @Bean
+//    public AuthenticationEntryPoint authenticationEntryPoint() {
+//        BasicAuthenticationEntryPoint entryPoint = new BasicAuthenticationEntryPoint();
+//        entryPoint.setRealmName("certificate realm");
+//        return entryPoint;
+//    }
 
 
 }

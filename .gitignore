@@ -15,6 +15,11 @@ Anti-Fraud\ System/Stolen\ cards\ \ suspicious\ IPs
 Anti-Fraud\ System/lesson-info.yaml
 Anti-Fraud\ System/task/test/
 Anti-Fraud\ System/task/build.gradle
+Anti-Fraud\ System/service_db.trace.db
+Anti-Fraud\ System/task/build/
+Anti-Fraud\ System/task/out/
+
 /Anti-Fraud System/Stolen cards   suspicious IPs/
+
 /.idea/
 /.gradle/
