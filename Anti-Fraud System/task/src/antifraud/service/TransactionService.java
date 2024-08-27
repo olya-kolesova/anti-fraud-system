@@ -1,6 +1,7 @@
 package antifraud.service;
 
 import antifraud.entity.Transaction;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,42 +11,64 @@ import java.util.stream.Stream;
 @Service
 public class TransactionService {
 
-    public record TransactionRecord(String result, String info) {}
+    private final IpService ipService;
 
-    public TransactionRecord getMoney(Transaction transaction) {
+    private final StolenCardService stolenCardService;
+
+
+    public TransactionService(IpService ipService, StolenCardService stolenCardService) {
+        this.ipService = ipService;
+        this.stolenCardService = stolenCardService;
+    }
+
+    public Transaction getMoney(Transaction transaction) throws Exception {
+        checkIp(transaction);
+        checkNumber(transaction);
         checkAmmount(transaction);
         String info = processCauses(transaction.getCauses());
         transaction.setInfo(info);
-        return new TransactionRecord(transaction.getResult(), transaction.getInfo());
+        return transaction;
     }
 
-//    public Transaction checkIp(Transaction transaction) {
-//        iPService.findByIp(transaction.getIp()).isPresent() {
-//
-//        }
-//    }
+    public void checkIp(Transaction transaction) throws Exception {
+        if (ipService.validateIp(transaction.getIp())) {
+            if (ipService.isIpPresent(transaction.getIp())) {
+                transaction.addCause("ip");
+                transaction.setResult(Transaction.Result.PROHIBITED);
+            }
+        } else {
+            throw new Exception();
+        }
+    }
 
-    //    public Transaction checkNumber(Transaction transaction) {
-//        NumberService.findByNumber(transaction.getIp()).isPresent() {
-//
-//        }
-//    }
+    public void checkNumber(Transaction transaction) throws Exception {
+        if (stolenCardService.checkCard(transaction.getNumber())) {
+            if (stolenCardService.isCardPresent(transaction.getNumber())) {
+                transaction.addCause("card-number");
+                transaction.setResult(Transaction.Result.PROHIBITED);
+            }
+        } else {
+            throw new Exception();
+        }
+    }
 
     public void checkAmmount(Transaction transaction) {
         if (transaction.getAmount() <= 200) {
-            transaction.setResult(Transaction.Result.ALLOWED);
             if (transaction.getCauses().isEmpty()) {
+                transaction.setResult(Transaction.Result.ALLOWED);
                 transaction.setInfo("none");
             }
         } else if (transaction.getAmount() <= 1500) {
-            transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
-            transaction.addCause("amount");
+            if (transaction.getCauses().isEmpty()) {
+                transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+                transaction.addCause("amount");
+            }
         } else {
             transaction.setResult(Transaction.Result.PROHIBITED);
             transaction.addCause("amount");
         }
-    }
 
+    }
 
 
 
@@ -55,10 +78,7 @@ public class TransactionService {
         } else if (causes.size() == 1) {
             return causes.get(0);
         } else {
-            String causesStr = causes.stream().sorted().filter(x -> causes.indexOf(x) != causes.size() - 1)
-                    .collect(Collectors.joining(", "));
-
-            return causesStr.concat(causes.get(causes.size() - 1));
+            return causes.stream().sorted().collect(Collectors.joining(", "));
         }
     }
 

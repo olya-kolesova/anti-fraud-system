@@ -2,7 +2,6 @@ package antifraud.controller;
 
 import antifraud.entity.Ip;
 import antifraud.entity.StolenCard;
-import antifraud.repository.StolenCardRepository;
 import antifraud.service.AppUserService;
 import antifraud.entity.Transaction;
 import antifraud.service.IpService;
@@ -13,11 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -35,6 +33,8 @@ public class TransactionController {
 
     @Autowired
     private final AppUserService userService;
+
+    public record TransactionRecord(String result, String info) {}
 
 
 
@@ -54,7 +54,7 @@ public class TransactionController {
                 }
                 ipService.saveIp(ip);
                 Ip ipWithId = ipService.findIpByIp(ip.getIp());
-                return new ResponseEntity<>(ipWithId, HttpStatus.CREATED);
+                return new ResponseEntity<>(ipWithId, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
@@ -101,7 +101,7 @@ public class TransactionController {
                 }
                 stolenCardService.saveCard(card);
                 StolenCard savedCard = stolenCardService.findCardByNumber(card.getNumber());
-                return new ResponseEntity<>(savedCard, HttpStatus.CREATED);
+                return new ResponseEntity<>(savedCard, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
@@ -111,12 +111,43 @@ public class TransactionController {
     }
 
 
+    @DeleteMapping("/api/antifraud/stolencard/{number}")
+    public @ResponseBody ResponseEntity<Object> deleteCard(@PathVariable String number) {
+        try {
+           if (stolenCardService.checkCard(number)) {
+               if (stolenCardService.isCardPresent(number)) {
+                   stolenCardService.deleteCard(number);
+                   Map<String, String> status = new HashMap<>();
+                   status.put("status", String.format("Card %s successfully removed!", number));
 
+                   return new ResponseEntity<>(status, HttpStatus.OK);
+               } else {
+                   return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+               }
+           } else {
+               return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+           }
+        } catch (NumberFormatException exception) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
+    @GetMapping("/api/antifraud/stolencard")
+    public @ResponseBody ResponseEntity<List<StolenCard>> getAllCards() {
+        return new ResponseEntity<>(stolenCardService.findAllSortedById(), HttpStatus.OK);
+    }
 
 
     @PostMapping("/api/antifraud/transaction")
     public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody Transaction transaction) {
-        return new ResponseEntity<>(transactionService.getMoney(transaction), HttpStatus.OK);
+        try {
+            Transaction checkedTransaction = transactionService.getMoney(transaction);
+            TransactionRecord transactionRecord = new TransactionRecord(checkedTransaction.getResult(), checkedTransaction.getInfo());
+            return new ResponseEntity<>(transactionRecord, HttpStatus.OK);
+        } catch (Exception exception) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
 

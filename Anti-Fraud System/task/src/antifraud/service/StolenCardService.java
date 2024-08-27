@@ -2,6 +2,7 @@ package antifraud.service;
 
 import antifraud.entity.StolenCard;
 import antifraud.repository.StolenCardRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,14 @@ public class StolenCardService {
 
     public boolean isCardPresent(String number) {
         return repository.findStolenCardByNumber(number).isPresent();
+    }
+    @Transactional
+    public void deleteCard(String number) {
+        repository.deleteStolenCardByNumber(number);
+    }
+
+    public List<StolenCard> findAllSortedById() {
+        return repository.findAllByOrderById();
     }
 
 }

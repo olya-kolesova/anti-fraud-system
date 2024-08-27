@@ -3,6 +3,7 @@ package antifraud.entity;
 import antifraud.utils.TransactionDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.ArrayList;
@@ -16,8 +17,9 @@ public class Transaction {
     @NotNull
     private Long amount;
 
-
+    @NotEmpty
     private String ip;
+    @NotEmpty
     private String number;
 
     private String result;
@@ -37,7 +39,9 @@ public class Transaction {
 
     }
 
-    public Transaction(Long amount) {
+    public Transaction(String ip, String number, Long amount) {
+        this.ip = ip;
+        this.number = number;
         this.amount = amount;
     }
 
