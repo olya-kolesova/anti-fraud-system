@@ -1,5 +1,6 @@
 package antifraud.controller;
 
+import antifraud.dto.TransactionDTO;
 import antifraud.entity.Ip;
 import antifraud.entity.StolenCard;
 import antifraud.service.AppUserService;
@@ -8,6 +9,7 @@ import antifraud.service.IpService;
 import antifraud.service.StolenCardService;
 import antifraud.service.TransactionService;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
@@ -140,8 +142,9 @@ public class TransactionController {
 
 
     @PostMapping("/api/antifraud/transaction")
-    public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody Transaction transaction) {
+    public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody TransactionDTO transactionDto) {
         try {
+            Transaction transaction = transactionService.convertDtoToTransaction(transactionDto);
             Transaction checkedTransaction = transactionService.getMoney(transaction);
             TransactionRecord transactionRecord = new TransactionRecord(checkedTransaction.getResult(), checkedTransaction.getInfo());
             return new ResponseEntity<>(transactionRecord, HttpStatus.OK);

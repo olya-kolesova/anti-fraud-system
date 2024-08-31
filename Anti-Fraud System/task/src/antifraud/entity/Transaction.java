@@ -1,36 +1,25 @@
 package antifraud.entity;
-
-import antifraud.utils.TransactionDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-
-import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
-@JsonDeserialize(using = TransactionDeserializer.class)
 public class Transaction {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    @Min(1)
-    @NotNull
     private Long amount;
 
-    @NotEmpty
+
     private String ip;
-    @NotEmpty
+
     private String number;
-    @NotEmpty
+
     private String region;
 
     private LocalDateTime date;
@@ -66,18 +55,18 @@ public class Transaction {
 
     private List<String> causes = new ArrayList<>();
 
-
     public Transaction() {
 
     }
 
-    public Transaction(String ip, String number, Long amount, String region, String date) throws DateTimeParseException,
+    public Transaction(String ip, String number, Long amount, String region, String date) throws DateTimeParseException, EnumConstantNotPresentException,
             IllegalArgumentException {
         this.ip = ip;
         this.number = number;
         this.amount = amount;
         this.region = Region.valueOf(region).getLabel();
         this.date = LocalDateTime.parse(date);
+
     }
 
     public Long getAmount() {
@@ -128,7 +117,6 @@ public class Transaction {
     public void setDate(String date) throws DateTimeParseException {
         this.date = LocalDateTime.parse(date);
     }
-
 
     public String getResult() {
         return result;

@@ -1,9 +1,12 @@
 package antifraud.service;
 
+import antifraud.dto.TransactionDTO;
 import antifraud.entity.Transaction;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -15,10 +18,13 @@ public class TransactionService {
 
     private final StolenCardService stolenCardService;
 
+    private final ModelMapper modelMapper;
 
-    public TransactionService(IpService ipService, StolenCardService stolenCardService) {
+
+    public TransactionService(IpService ipService, StolenCardService stolenCardService, ModelMapper modelMapper) {
         this.ipService = ipService;
         this.stolenCardService = stolenCardService;
+        this.modelMapper = modelMapper;
     }
 
     public Transaction getMoney(Transaction transaction) throws Exception {
@@ -80,6 +86,14 @@ public class TransactionService {
         } else {
             return causes.stream().sorted().collect(Collectors.joining(", "));
         }
+    }
+
+    public Transaction convertDtoToTransaction(TransactionDTO transactionDTO) throws IllegalArgumentException,
+            EnumConstantNotPresentException, DateTimeParseException {
+        Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
+        System.out.println(transaction.getDate());
+        System.out.println(transaction.getRegion());
+        return transaction;
     }
 
 }

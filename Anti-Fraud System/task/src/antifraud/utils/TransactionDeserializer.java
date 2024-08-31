@@ -1,6 +1,6 @@
 package antifraud.utils;
 
-import antifraud.entity.Transaction;
+import antifraud.dto.TransactionDTO;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -9,17 +9,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 
-public class TransactionDeserializer extends JsonDeserializer<Transaction> {
+public class TransactionDeserializer extends JsonDeserializer<TransactionDTO> {
 
     @Override
-    public Transaction deserialize(JsonParser parser, DeserializationContext context) throws JsonParseException, IOException {
+    public TransactionDTO deserialize(JsonParser parser, DeserializationContext context) throws JsonParseException, IOException {
         try {
             JsonNode node = parser.getCodec().readTree(parser);
-            return new Transaction(node.get("ip").asText(), node.get("number").asText(), node.get("amount").asLong(),
+            return new TransactionDTO(node.get("amount").asLong(), node.get("ip").asText(), node.get("number").asText(),
                     node.get("region").asText(), node.get("date").asText());
         } catch (Exception e) {
             e.printStackTrace();
-            return new Transaction(null, null,0L, null, null);
+            return new TransactionDTO(0L, null, null, null, null);
         }
     }
 }

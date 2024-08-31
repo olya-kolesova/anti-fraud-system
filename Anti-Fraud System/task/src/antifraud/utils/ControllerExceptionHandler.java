@@ -11,6 +11,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.io.IOException;
+import java.time.DateTimeException;
+import java.time.format.DateTimeParseException;
 
 @ControllerAdvice
 public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
@@ -30,6 +32,16 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request) {
         return new ResponseEntity<>("", HttpStatus.BAD_REQUEST);
+    }
+
+    protected ResponseEntity<Object> handleDateTimeParseException(
+        DateTimeParseException exception) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    protected ResponseEntity<Object> handleIllegalArgumentException(
+            IllegalArgumentException exception) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
 //    protected ResponseEntity<Object> handle
