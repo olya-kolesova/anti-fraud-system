@@ -1,7 +1,7 @@
 package antifraud.entity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -13,15 +13,15 @@ public class Transaction {
     @GeneratedValue
     private Long id;
 
+    @Column
     private Long amount;
-
-
+    @Column
     private String ip;
-
+    @Column
     private String number;
-
+    @Column
     private String region;
-
+    @Column
     private LocalDateTime date;
 
     public enum Region {
@@ -66,6 +66,15 @@ public class Transaction {
         this.amount = amount;
         this.region = Region.valueOf(region).getLabel();
         this.date = LocalDateTime.parse(date);
+
+    }
+
+    public Transaction(String ip, String number, Long amount, String region, LocalDateTime date) {
+        this.ip = ip;
+        this.number = number;
+        this.amount = amount;
+        this.region = region;
+        this.date = date;
 
     }
 
@@ -114,9 +123,10 @@ public class Transaction {
         return date;
     }
 
-    public void setDate(String date) throws DateTimeParseException {
+    public void setDate(String date) {
         this.date = LocalDateTime.parse(date);
     }
+
 
     public String getResult() {
         return result;

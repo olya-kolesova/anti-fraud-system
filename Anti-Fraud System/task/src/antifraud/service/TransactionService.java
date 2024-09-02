@@ -2,10 +2,13 @@ package antifraud.service;
 
 import antifraud.dto.TransactionDTO;
 import antifraud.entity.Transaction;
+import antifraud.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,19 +23,24 @@ public class TransactionService {
 
     private final ModelMapper modelMapper;
 
+    private final TransactionRepository repository;
 
-    public TransactionService(IpService ipService, StolenCardService stolenCardService, ModelMapper modelMapper) {
+
+    public TransactionService(IpService ipService, StolenCardService stolenCardService, ModelMapper modelMapper, TransactionRepository repository) {
         this.ipService = ipService;
         this.stolenCardService = stolenCardService;
         this.modelMapper = modelMapper;
+        this.repository = repository;
     }
 
     public Transaction getMoney(Transaction transaction) throws Exception {
         checkIp(transaction);
         checkNumber(transaction);
-        checkAmmount(transaction);
+        checkRegion(transaction);
+        checkAmount(transaction);
         String info = processCauses(transaction.getCauses());
         transaction.setInfo(info);
+        repository.save(transaction);
         return transaction;
     }
 
@@ -58,13 +66,34 @@ public class TransactionService {
         }
     }
 
-    public void checkAmmount(Transaction transaction) {
+    public void checkRegion(Transaction transaction) {
+        LocalDateTime dateTo = transaction.getDate();
+        System.out.println(dateTo);
+        LocalDateTime dateFrom = transaction.getDate().minusHours(1);
+        System.out.println(dateFrom);
+        List<Transaction> sameTransactions = repository.getAllTransactionsByAmountIpNumberWithinHour(dateFrom, dateTo);
+        sameTransactions.stream().map(Transaction::getRegion).forEach(System.out::println);
+        long repetition = sameTransactions.stream().map(Transaction::getRegion).distinct().count();
+        System.out.println(repetition);
+        if (repetition >= 2) {
+            transaction.addCause("region-correlation");
+            if (repetition == 2) {
+                transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+            }
+        }
+    }
+
+
+
+
+
+    public void checkAmount(Transaction transaction) {
         if (transaction.getAmount() <= 200) {
             if (transaction.getCauses().isEmpty()) {
                 transaction.setResult(Transaction.Result.ALLOWED);
                 transaction.setInfo("none");
             }
-        } else if (transaction.getAmount() <= 1500) {
+        } else if (transaction.getAmount() <= 1500 || transaction.getResult().equals("MANUAL_PROCESSING")) {
             if (transaction.getCauses().isEmpty()) {
                 transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
                 transaction.addCause("amount");
@@ -91,8 +120,7 @@ public class TransactionService {
     public Transaction convertDtoToTransaction(TransactionDTO transactionDTO) throws IllegalArgumentException,
             EnumConstantNotPresentException, DateTimeParseException {
         Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
-        System.out.println(transaction.getDate());
-        System.out.println(transaction.getRegion());
+        transaction.setDate(transactionDTO.getDate());
         return transaction;
     }
 
