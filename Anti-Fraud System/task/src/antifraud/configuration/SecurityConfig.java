@@ -95,7 +95,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAuthority("SUPPORT")
                         .requestMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/{number}").hasAuthority("SUPPORT")
                         .requestMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasAuthority("SUPPORT")
-                        .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").permitAll())
+                        .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

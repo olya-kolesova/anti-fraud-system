@@ -4,15 +4,12 @@ import antifraud.dto.TransactionDTO;
 import antifraud.entity.Transaction;
 import antifraud.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class TransactionService {
@@ -37,6 +34,7 @@ public class TransactionService {
         checkIp(transaction);
         checkNumber(transaction);
         checkRegion(transaction);
+        checkIpCorrelation(transaction);
         checkAmount(transaction);
         String info = processCauses(transaction.getCauses());
         transaction.setInfo(info);
@@ -68,23 +66,35 @@ public class TransactionService {
 
     public void checkRegion(Transaction transaction) {
         LocalDateTime dateTo = transaction.getDate();
-        System.out.println(dateTo);
         LocalDateTime dateFrom = transaction.getDate().minusHours(1);
-        System.out.println(dateFrom);
-        List<Transaction> sameTransactions = repository.getAllTransactionsByAmountIpNumberWithinHour(dateFrom, dateTo);
-        sameTransactions.stream().map(Transaction::getRegion).forEach(System.out::println);
-        long repetition = sameTransactions.stream().map(Transaction::getRegion).distinct().count();
-        System.out.println(repetition);
-        if (repetition >= 2) {
-            transaction.addCause("region-correlation");
-            if (repetition == 2) {
+        List<Transaction> sameTransactions = repository.getTransactionsByNumberAmountIpWithinHour(transaction.getNumber(), transaction.getIp(), dateFrom, dateTo);
+        sameTransactions.add(transaction);
+        long repetitionRegion = sameTransactions.stream().map(Transaction::getRegion).distinct().count();
+        if (repetitionRegion >= 3) {
+            if (repetitionRegion == 3 && transaction.getCauses().isEmpty()) {
                 transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+            } else {
+                transaction.setResult(Transaction.Result.PROHIBITED);
             }
+            transaction.addCause("region-correlation");
         }
     }
 
-
-
+    public void checkIpCorrelation(Transaction transaction) {
+        LocalDateTime dateTo = transaction.getDate();
+        LocalDateTime dateFrom = transaction.getDate().minusHours(1);
+        List<Transaction> sameTransactions = repository.getTransactionsByNumberAmountRegionWithinHour(transaction.getNumber(), transaction.getRegion(), dateFrom, dateTo);
+        sameTransactions.add(transaction);
+        long repetitionIp = sameTransactions.stream().map(Transaction::getIp).distinct().count();
+        if (repetitionIp >= 3) {
+            if ((repetitionIp == 3) && (transaction.getCauses().isEmpty() || transaction.getResult().equals("MANUAL_PROCESSING"))) {
+                transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+            } else {
+                transaction.setResult(Transaction.Result.PROHIBITED);
+            }
+            transaction.addCause("ip-correlation");
+        }
+    }
 
 
     public void checkAmount(Transaction transaction) {
@@ -93,7 +103,7 @@ public class TransactionService {
                 transaction.setResult(Transaction.Result.ALLOWED);
                 transaction.setInfo("none");
             }
-        } else if (transaction.getAmount() <= 1500 || transaction.getResult().equals("MANUAL_PROCESSING")) {
+        } else if (transaction.getAmount() <= 1500) {
             if (transaction.getCauses().isEmpty()) {
                 transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
                 transaction.addCause("amount");
@@ -104,7 +114,6 @@ public class TransactionService {
         }
 
     }
-
 
 
     public String processCauses(List<String> causes) {

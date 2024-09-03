@@ -1,5 +1,7 @@
 package antifraud.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -7,6 +9,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
+@Validated
 public class Transaction {
 
     @Id
@@ -14,6 +17,7 @@ public class Transaction {
     private Long id;
 
     @Column
+    @Min(1)
     private Long amount;
     @Column
     private String ip;
