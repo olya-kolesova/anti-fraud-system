@@ -2,12 +2,9 @@ package antifraud.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
-
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
+
+
 @Entity
 @Validated
 public class Transaction {
@@ -28,107 +25,51 @@ public class Transaction {
     @Column
     private LocalDateTime date;
 
-    public enum Region {
-        EAP ("EAP"),
-        ECA ("ECA"),
-        HIC ("HIC"),
-        LAC ("LAC"),
-        MENA ("MENA"),
-        SA("SA"),
-        SSA ("SSA");
-
-        private final String label;
-        Region(String label) {
-            this.label = label;
-        }
-
-        String getLabel() {
-            return label;
-        }
-    }
-
+    @Column
     private String result;
-
+    @Column
     private String info;
 
-    public enum Result {
-        ALLOWED,
-        MANUAL_PROCESSING,
-        PROHIBITED
-    }
+    @Column
+    private String feedback;
 
-    private List<String> causes = new ArrayList<>();
 
-    public Transaction() {
-
-    }
-
-    public Transaction(String ip, String number, Long amount, String region, String date) throws DateTimeParseException, EnumConstantNotPresentException,
-            IllegalArgumentException {
+    public Transaction(Long amount, String ip, String number, String region, LocalDateTime date, String result, String feedback, String info) {
+        this.amount = amount;
         this.ip = ip;
         this.number = number;
-        this.amount = amount;
-        this.region = Region.valueOf(region).getLabel();
-        this.date = LocalDateTime.parse(date);
-
-    }
-
-    public Transaction(String ip, String number, Long amount, String region, LocalDateTime date) {
-        this.ip = ip;
-        this.number = number;
-        this.amount = amount;
         this.region = region;
         this.date = date;
+        this.result = result;
+        this.feedback = feedback;
+        this.info = info;
+    }
 
+    public Long getId() {
+        return id;
     }
 
     public Long getAmount() {
         return amount;
     }
 
-    public void setAmount(Long amount) {
-        this.amount = amount;
-    }
 
     public String getIp() {
         return ip;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
 
     public String getNumber() {
         return number;
     }
 
-    public void setNumber(String number) {
-        this.number = number;
-    }
 
     public String getRegion() {
         return region;
     }
 
-    public void setRegion(String region) throws IllegalArgumentException {
-        this.region = Region.valueOf(region).getLabel();
-
-    }
-
-    public void setResult(Result result) {
-        this.result = switch (result) {
-            case ALLOWED -> "ALLOWED";
-            case MANUAL_PROCESSING -> "MANUAL_PROCESSING";
-            case PROHIBITED -> "PROHIBITED";
-        };
-    }
-
     public LocalDateTime getDate() {
         return date;
-    }
-
-    public void setDate(String date) {
-        this.date = LocalDateTime.parse(date);
     }
 
 
@@ -140,16 +81,7 @@ public class Transaction {
         return info;
     }
 
-    public void setInfo(String info) {
-        this.info = info;
+    public String getFeedback() {
+        return feedback;
     }
-
-    public void addCause(String cause) {
-        causes.add(cause);
-    }
-
-    public List<String> getCauses() {
-        return causes;
-    }
-
 }

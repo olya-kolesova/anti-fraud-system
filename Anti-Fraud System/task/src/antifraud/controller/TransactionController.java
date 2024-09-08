@@ -144,13 +144,18 @@ public class TransactionController {
     @PostMapping("/api/antifraud/transaction")
     public @ResponseBody ResponseEntity<Object> requestTransaction(@Valid @RequestBody TransactionDTO transactionDto) {
         try {
-            Transaction transaction = transactionService.convertDtoToTransaction(transactionDto);
-            Transaction checkedTransaction = transactionService.getMoney(transaction);
+//            Transaction transaction = transactionService.convertDtoToTransaction(transactionDto);
+            Transaction checkedTransaction = transactionService.getMoney(transactionDto);
             TransactionRecord transactionRecord = new TransactionRecord(checkedTransaction.getResult(), checkedTransaction.getInfo());
             return new ResponseEntity<>(transactionRecord, HttpStatus.OK);
         } catch (Exception exception) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/api/antifraud/history/{number}")
+    public @ResponseBody ResponseEntity<List<Transaction>> getHistory(@PathVariable String number) {
+        return new ResponseEntity<>(transactionService.getHistoryByNumber(number), HttpStatus.OK);
     }
 
 

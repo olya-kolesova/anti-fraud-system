@@ -3,6 +3,7 @@ package antifraud.service;
 import antifraud.dto.TransactionDTO;
 import antifraud.entity.Transaction;
 import antifraud.repository.TransactionRepository;
+import antifraud.utils.TransactionBuilder;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -18,35 +19,34 @@ public class TransactionService {
 
     private final StolenCardService stolenCardService;
 
-    private final ModelMapper modelMapper;
-
     private final TransactionRepository repository;
 
 
     public TransactionService(IpService ipService, StolenCardService stolenCardService, ModelMapper modelMapper, TransactionRepository repository) {
         this.ipService = ipService;
         this.stolenCardService = stolenCardService;
-        this.modelMapper = modelMapper;
         this.repository = repository;
     }
 
-    public Transaction getMoney(Transaction transaction) throws Exception {
-        checkIp(transaction);
-        checkNumber(transaction);
-        checkRegion(transaction);
-        checkIpCorrelation(transaction);
-        checkAmount(transaction);
-        String info = processCauses(transaction.getCauses());
-        transaction.setInfo(info);
+    public Transaction getMoney(TransactionDTO transactionDto) throws Exception {
+        TransactionBuilder builder = new TransactionBuilder();
+        checkIp(transactionDto, builder);
+        checkNumber(transactionDto, builder);
+        checkRegion(transactionDto, builder);
+        checkIpCorrelation(transactionDto, builder);
+        checkAmount(transactionDto, builder);
+        String info = processCauses(builder.getCauses());
+        builder.setInfo(info);
+        Transaction transaction = builder.build();
         repository.save(transaction);
         return transaction;
     }
 
-    public void checkIp(Transaction transaction) throws Exception {
-        if (ipService.validateIp(transaction.getIp())) {
-            if (ipService.isIpPresent(transaction.getIp())) {
-                transaction.addCause("ip");
-                transaction.setResult(Transaction.Result.PROHIBITED);
+    public void checkIp(TransactionDTO transactionDto, TransactionBuilder builder) throws Exception {
+        if (ipService.validateIp(transactionDto.getIp())) {
+            if (ipService.isIpPresent(transactionDto.getIp())) {
+                builder.addCause("ip");
+                builder.setResult("PROHIBITED");
             }
         } else {
             throw new Exception();
@@ -126,11 +126,16 @@ public class TransactionService {
         }
     }
 
-    public Transaction convertDtoToTransaction(TransactionDTO transactionDTO) throws IllegalArgumentException,
-            EnumConstantNotPresentException, DateTimeParseException {
-        Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
-        transaction.setDate(transactionDTO.getDate());
-        return transaction;
+//    public Transaction convertDtoToTransaction(TransactionDTO transactionDTO) throws IllegalArgumentException,
+//            EnumConstantNotPresentException, DateTimeParseException {
+//        Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
+//        transaction.setDate(transactionDTO.getDate());
+//        return transaction;
+//    }
+
+
+    public List<Transaction> getHistoryByNumber(String number) {
+        return repository.findAllByNumberOrderById(number);
     }
 
 }

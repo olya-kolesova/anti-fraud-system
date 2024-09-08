@@ -75,7 +75,7 @@ public class SecurityConfig {
 
 
     @Bean
-    public SecurityFilterChain SecurityfilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .httpBasic(withDefaults())
                 .csrf(CsrfConfigurer::disable)
@@ -95,7 +95,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAuthority("SUPPORT")
                         .requestMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/{number}").hasAuthority("SUPPORT")
                         .requestMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasAuthority("SUPPORT")
-                        .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
+                        .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/antifraud/history/{number}").permitAll())
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -105,27 +106,6 @@ public class SecurityConfig {
         return http.build();
 
     }
-
-//    @Bean
-//    public SecurityFilterChain transactionSecurityFilterchain(HttpSecurity http) throws Exception {
-//        http
-//                .csrf(CsrfConfigurer::disable)
-//                .headers(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests((authorize) -> authorize
-//                    .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-//                    .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAuthority("MERCHANT"))
-//                .httpBasic().authenticationEntryPoint(authenticationEntryPoint());
-//
-//        return http.build();
-//
-//    }
-//
-//    @Bean
-//    public AuthenticationEntryPoint authenticationEntryPoint() {
-//        BasicAuthenticationEntryPoint entryPoint = new BasicAuthenticationEntryPoint();
-//        entryPoint.setRealmName("certificate realm");
-//        return entryPoint;
-//    }
 
 
 }
