@@ -33,6 +33,8 @@ public class Transaction {
     @Column
     private String feedback;
 
+    public Transaction() {}
+
 
     public Transaction(Long amount, String ip, String number, String region, LocalDateTime date, String result, String feedback, String info) {
         this.amount = amount;
