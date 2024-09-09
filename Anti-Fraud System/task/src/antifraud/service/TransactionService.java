@@ -21,25 +21,29 @@ public class TransactionService {
 
     private final TransactionRepository repository;
 
+    private final ModelMapper modelMapper;
+
 
     public TransactionService(IpService ipService, StolenCardService stolenCardService, ModelMapper modelMapper, TransactionRepository repository) {
         this.ipService = ipService;
         this.stolenCardService = stolenCardService;
         this.repository = repository;
+        this.modelMapper = modelMapper;
     }
 
     public Transaction getMoney(TransactionDTO transactionDto) throws Exception {
-        TransactionBuilder builder = new TransactionBuilder();
+        TransactionBuilder builder = modelMapper.map(transactionDto, TransactionBuilder.class);
         checkIp(transactionDto, builder);
         checkNumber(transactionDto, builder);
-        checkRegion(transactionDto, builder);
-        checkIpCorrelation(transactionDto, builder);
+        Transaction transaction = builder.build();
+        checkRegion(builder, transaction);
+        checkIpCorrelation(builder, transaction);
         checkAmount(transactionDto, builder);
         String info = processCauses(builder.getCauses());
         builder.setInfo(info);
-        Transaction transaction = builder.build();
-        repository.save(transaction);
-        return transaction;
+        Transaction transactionFinal = builder.build();
+        repository.save(transactionFinal);
+        return transactionFinal;
     }
 
     public void checkIp(TransactionDTO transactionDto, TransactionBuilder builder) throws Exception {
@@ -53,68 +57,67 @@ public class TransactionService {
         }
     }
 
-    public void checkNumber(Transaction transaction) throws Exception {
-        if (stolenCardService.checkCard(transaction.getNumber())) {
-            if (stolenCardService.isCardPresent(transaction.getNumber())) {
-                transaction.addCause("card-number");
-                transaction.setResult(Transaction.Result.PROHIBITED);
+    public void checkNumber(TransactionDTO transactionDto, TransactionBuilder builder) throws Exception {
+        if (stolenCardService.checkCard(transactionDto.getNumber())) {
+            if (stolenCardService.isCardPresent(transactionDto.getNumber())) {
+                builder.addCause("card-number");
+                builder.setResult("PROHIBITED");
             }
         } else {
             throw new Exception();
         }
     }
 
-    public void checkRegion(Transaction transaction) {
+    public void checkRegion(TransactionBuilder builder, Transaction transaction) {
         LocalDateTime dateTo = transaction.getDate();
         LocalDateTime dateFrom = transaction.getDate().minusHours(1);
         List<Transaction> sameTransactions = repository.getTransactionsByNumberAmountIpWithinHour(transaction.getNumber(), transaction.getIp(), dateFrom, dateTo);
         sameTransactions.add(transaction);
         long repetitionRegion = sameTransactions.stream().map(Transaction::getRegion).distinct().count();
         if (repetitionRegion >= 3) {
-            if (repetitionRegion == 3 && transaction.getCauses().isEmpty()) {
-                transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+            if (repetitionRegion == 3 && builder.getCauses().isEmpty()) {
+                builder.setResult("MANUAL_PROCESSING");
             } else {
-                transaction.setResult(Transaction.Result.PROHIBITED);
+                builder.setResult("PROHIBITED");
             }
-            transaction.addCause("region-correlation");
+            builder.addCause("region-correlation");
         }
     }
 
-    public void checkIpCorrelation(Transaction transaction) {
+    public void checkIpCorrelation(TransactionBuilder builder, Transaction transaction) {
         LocalDateTime dateTo = transaction.getDate();
         LocalDateTime dateFrom = transaction.getDate().minusHours(1);
         List<Transaction> sameTransactions = repository.getTransactionsByNumberAmountRegionWithinHour(transaction.getNumber(), transaction.getRegion(), dateFrom, dateTo);
         sameTransactions.add(transaction);
         long repetitionIp = sameTransactions.stream().map(Transaction::getIp).distinct().count();
         if (repetitionIp >= 3) {
-            if ((repetitionIp == 3) && (transaction.getCauses().isEmpty() || transaction.getResult().equals("MANUAL_PROCESSING"))) {
-                transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
+            if ((repetitionIp == 3) && (builder.getCauses().isEmpty() || transaction.getResult().equals("MANUAL_PROCESSING"))) {
+                builder.setResult("MANUAL_PROCESSING");
             } else {
-                transaction.setResult(Transaction.Result.PROHIBITED);
+                builder.setResult("PROHIBITED");
             }
-            transaction.addCause("ip-correlation");
+            builder.addCause("ip-correlation");
         }
     }
 
 
-    public void checkAmount(Transaction transaction) {
-        if (transaction.getAmount() <= 200) {
-            if (transaction.getCauses().isEmpty()) {
-                transaction.setResult(Transaction.Result.ALLOWED);
-                transaction.setInfo("none");
+    public void checkAmount(TransactionDTO transactionDto, TransactionBuilder builder) {
+        if (transactionDto.getAmount() <= 200) {
+            if (builder.getCauses().isEmpty()) {
+                builder.setResult("ALLOWED");
+                builder.setInfo("none");
             }
-        } else if (transaction.getAmount() <= 1500) {
-            if (transaction.getCauses().isEmpty()) {
-                transaction.setResult(Transaction.Result.MANUAL_PROCESSING);
-                transaction.addCause("amount");
+        } else if (transactionDto.getAmount() <= 1500) {
+            if (builder.getCauses().isEmpty()) {
+                builder.setResult("MANUAL_PROCESSING");
+                builder.addCause("amount");
             }
         } else {
-            transaction.setResult(Transaction.Result.PROHIBITED);
-            transaction.addCause("amount");
+            builder.setResult("PROHIBITED");
+            builder.addCause("amount");
         }
 
     }
-
 
     public String processCauses(List<String> causes) {
         if (causes.isEmpty()) {
